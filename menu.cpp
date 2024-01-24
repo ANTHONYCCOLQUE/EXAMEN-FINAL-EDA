@@ -34,7 +34,7 @@ void menuBinario() {
 void menuRB() {
     RedBlackTree rbTree;
 
-    int dataToInsert[] = {10, 5, 3, 8, 12, 11, 14, 2, 7, 9};
+    int dataToInsert[] = {1,2,3,4,5,6,7,8,9,10};
     int dataSize = sizeof(dataToInsert) / sizeof(dataToInsert[0]);
 
     for (int i = 0; i < dataSize; i++) {
