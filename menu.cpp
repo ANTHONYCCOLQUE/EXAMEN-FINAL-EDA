@@ -22,7 +22,7 @@ void menuAVL() {
 void menuBinario() {
     BinaryTree bTree;
 
-    int dataToInsert[] = {10,9,8,7,6,5,4,2};
+    int dataToInsert[] = {10, 5, 3, 8, 12, 11, 14, 2, 7, 9};
     int dataSize = sizeof(dataToInsert) / sizeof(dataToInsert[0]);
 
     for (int i = 0; i < dataSize; i++) {
