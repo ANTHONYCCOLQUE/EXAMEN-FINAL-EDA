@@ -3,35 +3,56 @@
 #include <chrono>
 #include <string>
 #include <algorithm>
+#include <set>
+#include <ctime>
+#include <random>
+#include <vector>
+using namespace std;
 
 enum Color { RED, BLACK };
 
-struct Node {
+struct RBNode {
     int data;
-    Node *left, *right, *parent;
+    RBNode *left, *right, *parent;
     Color color;
-    Node(int value) : data(value), left(nullptr), right(nullptr), parent(nullptr), color(RED) {}
+    RBNode(int value) : data(value), left(nullptr), right(nullptr), parent(nullptr), color(RED) {}
 };
+
+
 
 class RedBlackTree {
 private:
-    Node* root;
-    Node* nil; // Nodo nulo para representar hojas
+    RBNode* root;
+    RBNode* nil; // Nodo nulo para representar hojas
 
     static const int HEIGHT = 22; // Altura suficiente para 10 nodos.
     static const int WIDTH = 120; // Duplicamos el ancho para una mejor visualización.
     char matrix[HEIGHT][WIDTH];
     std::string explanation; // Variable para almacenar las explicaciones
-
+	 void deleteTree(RBNode* node) {
+        if (node != nil) {
+            // Recursivamente liberar nodos en el subárbol izquierdo y derecho
+            deleteTree(node->left);
+            deleteTree(node->right);
+            // Liberar el nodo actual
+            delete node;
+        }
+    }
 public:
     RedBlackTree() {
-        nil = new Node(-1);
+        nil = new RBNode(-1);
         nil->color = BLACK;
         root = nil;
     }
-
-    void leftRotate(Node* x) {
-        Node* y = x->right;
+	
+	~RedBlackTree() {
+        // Llamada a la función para liberar la memoria del árbol
+        deleteTree(root);
+        // Liberar el nodo nulo
+        delete nil;
+    }
+    void leftRotate(RBNode* x) {
+        RBNode* y = x->right;
         x->right = y->left;
         if (y->left != nil) {
             y->left->parent = x;
@@ -49,8 +70,8 @@ public:
         explanation += "Rotacion a la izquierda en " + std::to_string(x->data) + ".\n";
     }
 
-    void rightRotate(Node* y) {
-        Node* x = y->left;
+    void rightRotate(RBNode* y) {
+        RBNode* x = y->left;
         y->left = x->right;
         if (x->right != nil) {
             x->right->parent = y;
@@ -69,7 +90,7 @@ public:
     }
 
     void insert(int data) {
-	    Node* node = new Node(data);
+	    RBNode* node = new RBNode(data);
 	    node->color = RED;
 	    node->left = nil;
 	    node->right = nil;
@@ -90,9 +111,9 @@ public:
 	    printExplanation(); // Mostrar explicaciones para la inserción después del balanceo
 }
 
-    void insertBST(Node* z) {
-        Node* y = nil;
-        Node* x = root;
+    void insertBST(RBNode* z) {
+        RBNode* y = nil;
+        RBNode* x = root;
 
         while (x != nil) {
             y = x;
@@ -114,10 +135,10 @@ public:
         }
     }
 
-	void fixInsert(Node* z) {
+	void fixInsert(RBNode* z) {
 	    while (z->parent->color == RED) {
 	        if (z->parent == z->parent->parent->left) {
-	            Node* y = z->parent->parent->right;
+	            RBNode* y = z->parent->parent->right;
 	            if (y->color == RED) {
 	                // Caso 1: Tanto el padre como el tío de z son rojos
 	                explanation += "Caso 1: El padre y el tio son rojos. Recoloreando...\n";
@@ -150,7 +171,7 @@ public:
 	            }
 	        } else {
 	            // Espejo del código anterior con 'right' y 'left' intercambiados
-	            Node* y = z->parent->parent->left;
+	            RBNode* y = z->parent->parent->left;
 	            if (y->color == RED) {
 	                // Caso 1
 	                explanation += "Caso 1: El padre y el tio son rojos. Recoloreando...\n";
@@ -212,7 +233,7 @@ public:
         }
     }
 
-    void visualizeTreeInMatrix(Node* node, int depth, int left, int right) {
+    void visualizeTreeInMatrix(RBNode* node, int depth, int left, int right) {
         if (node == nil || depth >= HEIGHT - 1 || left >= right) return;
 
         int mid = (left + right) / 2;
@@ -226,7 +247,8 @@ public:
         }
 
         matrix[depth][mid - 1] = (node->color == RED) ? 'R' : 'B';
-
+		
+		
         visualizeTreeInMatrix(node->left, depth + 2, left, mid - 1);
         visualizeTreeInMatrix(node->right, depth + 2, mid + 1, right);
     }
@@ -244,8 +266,40 @@ public:
 	    std::this_thread::sleep_for(std::chrono::seconds(1)); // Incrementar el tiempo para mejor visualización
 	    system("pause");
 }
+	/*void insertRandomNumbers(int count) {
+        mt19937 gen(chrono::high_resolution_clock::now().time_since_epoch().count());
+
+        root = nullptr;  // Reinicia el árbol antes de insertar nuevos números
+
+        vector<int> numbers;
+        for (int i = 1; i <= 100; i++) {
+            numbers.push_back(i);
+        }
+
+        shuffle(numbers.begin(), numbers.end(), gen);
+        numbers.resize(count);
+
+        for (int number : numbers) {
+            insert(number);
+        }
+    }*/
+  
 };
-/*
+
+  vector<int> generateRandomNumbersRB(int count) {
+	    mt19937 gen(chrono::high_resolution_clock::now().time_since_epoch().count());
+	
+	    vector<int> numbers;
+	    for (int i = 1; i <= 100; i++) {
+	        numbers.push_back(i);
+	    }
+	
+	    shuffle(numbers.begin(), numbers.end(), gen);
+	    numbers.resize(count);
+	
+	    return numbers;
+}
+	/*
 int main() {
     RedBlackTree rbTree;
 
@@ -256,6 +310,32 @@ int main() {
         rbTree.insert(dataToInsert[i]);
         //rbTree.visualizeTree();
     }
+    
+    int n, dato;
+	cout<< "Digite cantidad de digitos: ";
+	cin >> n;
+    for (int i = 0; i<n; i++){
+		cout<<"Inserte dato: ";
+		cin >> dato;
+		rbTree.insert(dato);		
+	}
+	
+	int count; 
+	cout<< "Ingrese cantidad de numeros aleatorios a generar: ";
+	cin >> count;
+    vector<int> randomNumbers = generateRandomNumbersRB(count);
+	
+	cout<<" \nNumeros aleatorios generados: ";
+	cout<<"[ ";
+	for (int i = 0 ; i < count ; i++){
+		cout << randomNumbers[i] <<" - ";
+	}
+	cout<<" ]\n";
+    
+    
+    for (int i = 0; i<randomNumbers.size(); i++){
+    	rbTree.insert(randomNumbers[i]);
+	}
 
     return 0;
 }*/
