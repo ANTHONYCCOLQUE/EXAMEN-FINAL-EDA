@@ -1,6 +1,14 @@
 #include <iostream>
 #include <string>
 #include <algorithm>
+#include <set>
+#include <ctime>
+#include <random>
+#include <chrono>
+
+using namespace std;
+
+
 
 struct BinaryNode {
     int data;
@@ -15,10 +23,17 @@ private:
     static const int HEIGHT = 22;
     static const int WIDTH = 120;
     char matrix[HEIGHT][WIDTH];
+    
+    //vector<int> numeros;
 
 public:
     BinaryTree() : root(nullptr) {}
-
+	~BinaryTree() {
+        // Llama a la función de liberación para liberar la memoria del árbol
+        deleteTree(root);
+    }
+	vector<int> numeros;
+	
     void insert(int data) {
         std::cout << "Insertando: " << data << std::endl;
         root = insertBST(root, data);
@@ -83,17 +98,84 @@ public:
             std::cout << std::endl;
         }
     }
+    
+    void insertRandomNumbers(int count) {
+        mt19937 gen(chrono::high_resolution_clock::now().time_since_epoch().count());
+
+        root = nullptr;  // Reinicia el árbol antes de insertar nuevos números
+
+        vector<int> numbersB;
+        for (int i = 1; i <= 100; i++) {
+            numbersB.push_back(i);
+            
+        }
+
+        shuffle(numbersB.begin(), numbersB.end(), gen);
+        numbersB.resize(count);
+
+        for (int number : numbersB) {
+            numeros.push_back(number);
+			insert(number);
+         
+   	 	}
+	}
+	
+	void Values() {
+        cout << "Valores almacenados en el vector: ";
+        for (int i = 0 ; i < numeros.size() ;i++) {
+            cout << numeros[i]<< " ";
+        }
+        cout << endl;
+    }
+    
+    void deleteTree(BinaryNode* node) {
+        if (node != nullptr) {
+            // Recursivamente libera la memoria de los nodos del subárbol izquierdo y derecho
+            deleteTree(node->left);
+            deleteTree(node->right);
+            // Libera el nodo actual
+            delete node;
+        }
+    }
+
 };
+
+	
 /*
 int main() {
-    BinaryTree bTree;
+   BinaryTree bTree;
 
-    int dataToInsert[] = {50, 30, 70, 20, 40, 60, 80};
-    int dataSize = sizeof(dataToInsert) / sizeof(dataToInsert[0]);
+   // int dataToInsert[] = {50, 30, 70, 20, 40, 60, 80};
+  //  int dataSize = sizeof(dataToInsert) / sizeof(dataToInsert[0]);
+/*	int n, dato;
+	cout<< "Digite cantidad de digitos: ";
+	cin >> n;
+		
+				
+	for (int i = 0; i<n; i++){
+		cout<<"Inserte dato: ";
+		cin >> dato;
+		bTree.insert(dato);		
+	}
 
-    for (int i = 0; i < dataSize; i++) {
-        bTree.insert(dataToInsert[i]);
-    }
+	
+	
+	int count;
+    cout << "Ingrese la cantidad de numeros aleatorios a generar: ";
+    cin >> count;
+
+	//for (int i = 0; i<count; i++){
+//		cout<<numeros[i];		
+	//}
+	bTree.Values() ;
+
+    bTree.insertRandomNumbers(count);
+	
+	
+	
+   // for (int i = 0; i < dataSize; i++) {
+   //    bTree.insert(dataToInsert[i]);
+   // }
 
     return 0;
 }*/
