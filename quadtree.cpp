@@ -1,220 +1,292 @@
-#include <cmath>
 #include <iostream>
+#include <vector>
 #include "graficarQuad-tree.h"
-using namespace std;
- 
-// Used to hold details of a point
-struct Point {
-    int x;
-    int y;
-    Point(int _x, int _y)
-    {
-        x = _x;
-        y = _y;
-    }
-    Point()
-    {
-        x = 0;
-        y = 0;
-    }
-};
- 
-// The objects that we want stored in the quadtree
-struct Node {
-    Point pos;
-    int data;
-    Node(Point _pos, int _data)
-    {
-        pos = _pos;
-        data = _data;
-    }
-    Node() { data = 0; }
-};
- 
-// The main quadtree class
-class Quad {
-    // Hold details of the boundary of this node
-    Point topLeft;
-    Point botRight;
- 
-    // Contains details of node
-    Node* n;
- 
-    // Children of this tree
-    Quad* topLeftTree;
-    Quad* topRightTree;
-    Quad* botLeftTree;
-    Quad* botRightTree;
- 
+
+class PointQ {
 public:
-    Quad()
-    {
-        topLeft = Point(0, 0);
-        botRight = Point(0, 0);
-        n = NULL;
-        topLeftTree = NULL;
-        topRightTree = NULL;
-        botLeftTree = NULL;
-        botRightTree = NULL;
-    }
-    Quad(Point topL, Point botR)
-    {
-        n = NULL;
-        topLeftTree = NULL;
-        topRightTree = NULL;
-        botLeftTree = NULL;
-        botRightTree = NULL;
-        topLeft = topL;
-        botRight = botR;
-    }
-    void insert(Node*);
-    Node* search(Point);
-    bool inBoundary(Point);
-};
- 
-// Insert a node into the quadtree
-void Quad::insert(Node* node)
-{
-    if (node == NULL)
-        return;
- 
-    // Current quad cannot contain it
-    if (!inBoundary(node->pos))
-        return;
- 
-    // We are at a quad of unit area
-    // We cannot subdivide this quad further
-    if (abs(topLeft.x - botRight.x) <= 1
-        && abs(topLeft.y - botRight.y) <= 1) {
-        if (n == NULL)
-            n = node;
-        return;
-    }
- 
-    if ((topLeft.x + botRight.x) / 2 >= node->pos.x) {
-        // Indicates topLeftTree
-        if ((topLeft.y + botRight.y) / 2 >= node->pos.y) {
-            if (topLeftTree == NULL)
-                topLeftTree = new Quad(
-                    Point(topLeft.x, topLeft.y),
-                    Point((topLeft.x + botRight.x) / 2,
-                          (topLeft.y + botRight.y) / 2));
-            topLeftTree->insert(node);
-        }
- 
-        // Indicates botLeftTree
-        else {
-            if (botLeftTree == NULL)
-                botLeftTree = new Quad(
-                    Point(topLeft.x,
-                          (topLeft.y + botRight.y) / 2),
-                    Point((topLeft.x + botRight.x) / 2,
-                          botRight.y));
-            botLeftTree->insert(node);
-        }
-    }
-    else {
-        // Indicates topRightTree
-        if ((topLeft.y + botRight.y) / 2 >= node->pos.y) {
-            if (topRightTree == NULL)
-                topRightTree = new Quad(
-                    Point((topLeft.x + botRight.x) / 2,
-                          topLeft.y),
-                    Point(botRight.x,
-                          (topLeft.y + botRight.y) / 2));
-            topRightTree->insert(node);
-        }
- 
-        // Indicates botRightTree
-        else {
-            if (botRightTree == NULL)
-                botRightTree = new Quad(
-                    Point((topLeft.x + botRight.x) / 2,
-                          (topLeft.y + botRight.y) / 2),
-                    Point(botRight.x, botRight.y));
-            botRightTree->insert(node);
-        }
-    }
-}
- 
-// Find a node in a quadtree
-Node* Quad::search(Point p)
-{
-    // Current quad cannot contain it
-    if (!inBoundary(p))
-        return NULL;
- 
-    // We are at a quad of unit length
-    // We cannot subdivide this quad further
-    if (n != NULL)
-        return n;
- 
-    if ((topLeft.x + botRight.x) / 2 >= p.x) {
-        // Indicates topLeftTree
-        if ((topLeft.y + botRight.y) / 2 >= p.y) {
-            if (topLeftTree == NULL)
-                return NULL;
-            return topLeftTree->search(p);
-        }
- 
-        // Indicates botLeftTree
-        else {
-            if (botLeftTree == NULL)
-                return NULL;
-            return botLeftTree->search(p);
-        }
-    }
-    else {
-        // Indicates topRightTree
-        if ((topLeft.y + botRight.y) / 2 >= p.y) {
-            if (topRightTree == NULL)
-                return NULL;
-            return topRightTree->search(p);
-        }
- 
-        // Indicates botRightTree
-        else {
-            if (botRightTree == NULL)
-                return NULL;
-            return botRightTree->search(p);
-        }
-    }
-};
- 
-// Check if current quadtree contains the point
-bool Quad::inBoundary(Point p)
-{
-    return (p.x >= topLeft.x && p.x <= botRight.x
-            && p.y >= topLeft.y && p.y <= botRight.y);
-}
- 
-// Driver program
-int main()
-{
-    int x1,x2,x3;
-    int y1,y2,y3;
+    double x, y;
 
-    x1 = 1; y1 = 1;
-    x2 = 2; y2 = 5;
-    x3 = 7; y3 = 6;
+    PointQ(double x, double y) : x(x), y(y) {}
+};
+
+class QuadtreeNode {
+public:
+    double x, y, width, height;
+    std::vector<PointQ> points;
+    QuadtreeNode* children[4];
+
+    QuadtreeNode(double x, double y, double width, double height) : x(x), y(y), width(width), height(height) {
+        for (int i = 0; i < 4; ++i) {
+            children[i] = nullptr;
+        }
+    }
+
+    ~QuadtreeNode() {
+        for (int i = 0; i < 4; ++i) {
+            delete children[i];
+        }
+    }
+
+    bool hasChildren() const {
+        for (int i = 0; i < 4; ++i) {
+            if (children[i] != nullptr) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    void subdivide() {
+        double halfWidth = width / 2;
+        double halfHeight = height / 2;
+
+        children[0] = new QuadtreeNode(x, y, halfWidth, halfHeight);
+        children[1] = new QuadtreeNode(x + halfWidth, y, halfWidth, halfHeight);
+        children[2] = new QuadtreeNode(x, y + halfHeight, halfWidth, halfHeight);
+        children[3] = new QuadtreeNode(x + halfWidth, y + halfHeight, halfWidth, halfHeight);
+    }
+
+    int getIndex(const PointQ& p) {
+        int index = -1;
+        double verticalMidpoint = x + (width / 2);
+        double horizontalMidpoint = y + (height / 2);
+
+        bool topQuadrant = (p.y < horizontalMidpoint);
+        bool bottomQuadrant = (p.y >= horizontalMidpoint);
+
+        if (p.x < verticalMidpoint) {
+            if (topQuadrant) {
+                index = 0;
+            } else if (bottomQuadrant) {
+                index = 2;
+            }
+        } else if (p.x >= verticalMidpoint) {
+            if (topQuadrant) {
+                index = 1;
+            } else if (bottomQuadrant) {
+                index = 3;
+            }
+        }
+
+        return index;
+    }
+
+    void insert(const PointQ& p) {
+        if (hasChildren()) {
+            int index = getIndex(p);
+
+            if (index != -1) {
+                children[index]->insert(p);
+                return;
+            }
+        }
+
+        points.push_back(p);
+
+        if (points.size() > 4 && !hasChildren()) {
+            subdivide();
+
+            for (const auto& point : points) {
+                int index = getIndex(point);
+                if (index != -1) {
+                    children[index]->insert(point);
+                }
+            }
+
+            points.clear();
+        }
+    }
+
+    void queryRange(const double xRangeMin, const double yRangeMin, const double xRangeMax, const double yRangeMax, std::vector<PointQ>& result) {
+        if (x + width < xRangeMin || x > xRangeMax || y + height < yRangeMin || y > yRangeMax) {
+            return;
+        }
+
+        for (const auto& point : points) {
+            if (point.x >= xRangeMin && point.x <= xRangeMax && point.y >= yRangeMin && point.y <= yRangeMax) {
+                result.push_back(point);
+            }
+        }
+
+        if (hasChildren()) {
+            for (int i = 0; i < 4; ++i) {
+                children[i]->queryRange(xRangeMin, yRangeMin, xRangeMax, yRangeMax, result);
+            }
+        }
+    }
+
+};
+
+struct Range {
+    int a;
+    int b;
+    int c;
+    int d;
     
-    int numero = 11;
-    int filas = numero*3-(numero-1); 
-    int columnas = numero*5-(numero-1); 
 
+    Range(int a, int b, int c, int d ) : a(a), b(b), c(c), d(d) {}
+};
+
+int cero(int num){
+    if (num<0){
+        return 0;
+    }
+    return num;
+}
+
+int cero1(int num, int num2){
+    if (num == 0){
+        return 0;
+    }
+    return num+num2;
+}
+
+void Rangos2(std::vector<Range>& puntos,int Ma, int x1, int x2 ) {
+    int nun = 0;
+    puntos.push_back(Range(x1,x2,x1+Ma,x2+Ma));
+    puntos.push_back(Range(x1,x2+Ma,x1+Ma,x2+(2*Ma)));
+    puntos.push_back(Range(x1+Ma,x2,x1+(2*Ma),x2+Ma));
+    puntos.push_back(Range(x1+Ma,x2+Ma,x1+(2*Ma),x2+(2*Ma)));
+}
+
+
+
+void imprimirPuntos(const std::vector<Range>& puntos) {
+    for (const Range& punto : puntos) {
+        std::cout << "Punto: (" << punto.a << ", " << punto. b << ", " << punto. c << ", " << punto. d << ")\n";
+    }
+}
+
+
+
+void queryAndPrintPointsInRange( QuadtreeNode& quadtree, double xRangeMin, double yRangeMin, double xRangeMax, double yRangeMax) {
+    std::vector<PointQ> result;
+    quadtree.queryRange(xRangeMin, yRangeMin, xRangeMax, yRangeMax, result);
+
+    // Print the result
+    for (const auto& point : result) {
+        std::cout << "Point (" << point.x << ", " << point.y << ")\n";
+    }
+}
+
+
+int queryAndPrintInRange( QuadtreeNode& quadtree, double xRangeMin, double yRangeMin, double xRangeMax, double yRangeMax) {
+    int contPoint  = 0;
+    std::vector<PointQ> result;
+    quadtree.queryRange(xRangeMin, yRangeMin, xRangeMax, yRangeMax, result);
+    contPoint = result.size();
+
+    return contPoint ;
+}
+
+void Rangos3( std::string** matrizP,std::string** matrizC, int filas, int columnas, int tamanoMatriz,  QuadtreeNode& quadtree ) {
+    if (queryAndPrintInRange(quadtree,0,0,tamanoMatriz-1,tamanoMatriz-1) > 1){
+        inicializarMatrizRQ(matrizP, matrizC, filas,  columnas, tamanoMatriz/2,tamanoMatriz/2 ) ;
+    }
+    std::vector<Range> puntos1;
+    std::vector<Range> puntos2;
+    std::vector<Range> puntos3;
+
+    Rangos2(puntos1, tamanoMatriz/2, 0,0);
+    for (const auto& point : puntos1) {
+        Rangos2(puntos2, tamanoMatriz/4, point.a, point.b);
+    }
+
+    for (const auto& point : puntos2) {
+        Rangos2(puntos3, tamanoMatriz/8, point.a, point.b);
+    }
+
+
+    for (const auto& point : puntos1) {
+        if (queryAndPrintInRange(quadtree,cero(point.a),cero(point.b),cero(point.c-1),cero(point.d-1)) > 1 ){
+           inicializarMatrizRQ(matrizP, matrizC, filas,  columnas, (point.a)+4, abs((point.b+4)-tamanoMatriz )) ; 
+        }
+    }
+     
+    for (const auto& point2 : puntos2) {
+        if (queryAndPrintInRange(quadtree,cero(point2.a),cero(point2.b),cero(point2.c-1),cero(point2.d-1)) > 1 ){
+           inicializarMatrizRQ(matrizP, matrizC, filas,  columnas, (point2.a)+2, abs((point2.b+2)-tamanoMatriz )) ; 
+        }
+    }
+    
+    for (const auto& point3 : puntos3) {
+        if (queryAndPrintInRange(quadtree,cero(point3.a),cero(point3.b),cero(point3.c-1),cero(point3.d-1)) > 1 ){
+           inicializarMatrizRQ(matrizP, matrizC, filas,  columnas, (point3.a)+1, abs((point3.b+1)-tamanoMatriz )) ; 
+        }
+    }
+    
+    
+
+}
+
+// Función para generar números aleatorios
+	vector<PointQ> generateRandomPoints(int count, int max_x, int max_y) {
+	    mt19937 gen(chrono::high_resolution_clock::now().time_since_epoch().count());
+	    uniform_int_distribution<> distrib_x(0, max_x);
+	    uniform_int_distribution<> distrib_y(0, max_y);
+	
+	    vector<PointQ> points;
+	    for (int i = 0; i < count; ++i) {
+	        int x = distrib_x(gen);
+	        int y = distrib_y(gen);
+	        points.push_back(PointQ(x, y));
+	    }
+	
+	    return points;
+	}
+
+/*
+int main() {
+    QuadtreeNode quadtree(0, 0, 16, 16);
+    int tamanoMatriz = 16;
+    //tamaño de la matriz en conslola 
+    int filas = tamanoMatriz*5-(tamanoMatriz-1); 
+    int columnas = tamanoMatriz*5-(tamanoMatriz-1);
     std::string** miMatrizP = crearMatriz(filas, columnas);
     std::string** miMatrizC = crearMatriz(filas, columnas);
-    Quad center(Point(0, 0), Point(11, 11));
 
+    // Insert points into the quadtree
+    quadtree.insert(Point(1, 1));
+    quadtree.insert(Point(2, 2));
+    quadtree.insert(Point(2, 3));
+    quadtree.insert(Point(12, 10));
+    quadtree.insert(Point(14, 9));
+    quadtree.insert(Point(4, 12));
+    quadtree.insert(Point(4, 13));
+    quadtree.insert(Point(13, 4));
+    quadtree.insert(Point(13, 3));
+    quadtree.insert(Point(7, 7));
+    quadtree.insert(Point(7, 8));
+    quadtree.insert(Point(14, 10));
+    quadtree.insert(Point(14, 8));
+
+  
     inicializarMatrizT(miMatrizP, miMatrizC, filas, columnas);
-    Node a(Point(1, 1), 1);
-    inicializarMatrizR(miMatrizP, miMatrizC, filas,  columnas,  x1,  numero -y1 ) ;
+
+    //graficar puntos
+    inicializarP(miMatrizP, miMatrizC,  1+1,  abs(1+1-(tamanoMatriz+1))) ;
+    inicializarP(miMatrizP, miMatrizC,  2+1,  abs(2+1-(tamanoMatriz+1))) ;
+    inicializarP(miMatrizP, miMatrizC,  2+1,  abs(3+1-(tamanoMatriz+1))) ;
+    inicializarP(miMatrizP, miMatrizC,  12+1,  abs(10+1-(tamanoMatriz+1))) ;
+    inicializarP(miMatrizP, miMatrizC,  14+1,  abs(9+1-(tamanoMatriz+1))) ;
+    inicializarP(miMatrizP, miMatrizC,  4+1,  abs(12+1-(tamanoMatriz+1))) ;
+    inicializarP(miMatrizP, miMatrizC,  4+1,  abs(13+1-(tamanoMatriz+1))) ;
+    inicializarP(miMatrizP, miMatrizC,  13+1,  abs(4+1-(tamanoMatriz+1))) ;
+    inicializarP(miMatrizP, miMatrizC,  13+1,  abs(3+1-(tamanoMatriz+1))) ;
+    inicializarP(miMatrizP, miMatrizC,  7+1,  abs(7+1-(tamanoMatriz+1))) ;
+    inicializarP(miMatrizP, miMatrizC,  7+1,  abs(8+1-(tamanoMatriz+1))) ;
+    inicializarP(miMatrizP, miMatrizC,  14+1,  abs(10+1-(tamanoMatriz+1))) ;
+    inicializarP(miMatrizP, miMatrizC,  14+1,  abs(8+1-(tamanoMatriz+1))) ;
+  
+
+    Rangos3(miMatrizP,miMatrizC,filas, columnas, tamanoMatriz,quadtree  );
+
     imprimirMatriz(miMatrizP, filas, columnas);
-    Node b(Point(2, 5), 2);
-    inicializarMatrizR(miMatrizP, miMatrizC, filas,  columnas,  x2,  numero -y2 ) ;
-        imprimirMatriz(miMatrizP, filas, columnas);
-    Node c(Point(7, 6), 3);
-    inicializarMatrizR(miMatrizP, miMatrizC, filas,  columnas,  x3,  numero -y3 ) ;
-        imprimirMatriz(miMatrizP, filas, columnas);
+    liberarMatriz(miMatrizP, filas);
+    liberarMatriz(miMatrizC, filas);
+
+
+
+
     return 0;
-}
+}*/
